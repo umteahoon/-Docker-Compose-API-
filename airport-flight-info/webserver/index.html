@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>항공운항정보 조회</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 1em;
+      background: #f9f9f9;
+    }
+    h1 {
+      color: #0055aa;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 0.5em;
+      text-align: center;
+    }
+    th {
+      background-color: #0055aa;
+      color: white;
+    }
+    input, button {
+      font-size: 1em;
+      padding: 0.3em 0.6em;
+      margin-left: 0.5em;
+      margin-bottom: 0.5em;
+    }
+    #flightDetail {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin-top: 1em;
+      border-radius: 4px;
+      max-width: 500px;
+    }
+  </style>
+</head>
+<body>
+  <h1>공항 도착 항공편 정보</h1>
+
+  <label for="flightInput">항공편 번호 입력: </label>
+  <input type="text" id="flightInput" placeholder="예: KE164" />
+  <button id="searchBtn">검색</button>
+  <button id="resetBtn">초기화</button>
+
+  <table id="flight-table" aria-label="항공편 도착 정보 테이블">
+    <thead>
+      <tr>
+        <th>항공사</th>
+        <th>편명</th>
+        <th>출발지</th>
+        <th>도착 예정 시간</th>
+        <th>터미널</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- 항공편 정보가 여기 채워집니다 -->
+    </tbody>
+  </table>
+
+  <div id="flightDetail"></div>
+
+  <script>
+    const flightInput = document.getElementById('flightInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const flightDetail = document.getElementById('flightDetail');
+    const tbody = document.querySelector("#flight-table tbody");
+
+    let allFlights = [];
+
+    // 시간 문자열 포맷 함수 (예: 202505250333 → 2025-05-25 03:33)
+    function formatDateTime(str) {
+      if (!str || str.length < 12) return str;
+      return (
+        str.slice(0,4) + "-" +
+        str.slice(4,6) + "-" +
+        str.slice(6,8) + " " +
+        str.slice(8,10) + ":" +
+        str.slice(10,12)
+      );
+    }
+
+    function renderTable(flights) {
+      tbody.innerHTML = '';
+      flights.forEach(flight => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${flight.airline || ''}</td>
+          <td>${flight.flightId || ''}</td>
+          <td>${flight.airport || ''}</td>
+          <td>${formatDateTime(flight.estimatedDateTime) || ''}</td>
+          <td>${flight.terminalid || ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      flightDetail.innerHTML = '';
+    }
+
+    function renderDetail(flight) {
+      flightDetail.innerHTML = `
+        <h2>항공편 상세 정보</h2>
+        <ul>
+          <li><b>항공사:</b> ${flight.airline || '-'}</li>
+          <li><b>편명:</b> ${flight.flightId || '-'}</li>
+          <li><b>출발지:</b> ${flight.airport || '-'} (${flight.airportCode || '-'})</li>
+          <li><b>도착 예정 시간:</b> ${formatDateTime(flight.estimatedDateTime) || '-'}</li>
+          <li><b>출구 번호:</b> ${flight.exitnumber || '-'}</li>
+          <li><b>게이트 번호:</b> ${flight.gatenumber || '-'}</li>
+          <li><b>터미널:</b> ${flight.terminalid || '-'}</li>
+          <li><b>상태:</b> ${flight.remark || '-'}</li>
+          <li><b>코드쉐어:</b> ${flight.codeshare || '-'}</li>
+          <li><b>스탠딩 위치:</b> ${flight.fstandposition || '-'}</li>
+        </ul>
+      `;
+    }
+
+    searchBtn.addEventListener('click', () => {
+      const query = flightInput.value.trim().toUpperCase();
+      if (!query) {
+        renderTable(allFlights);
+        flightDetail.innerHTML = '';
+        return;
+      }
+      const found = allFlights.find(f => f.flightId.toUpperCase() === query);
+      if (found) {
+        renderTable([found]);
+        renderDetail(found);
+      } else {
+        flightDetail.innerHTML = '<p>해당 편명에 대한 정보가 없습니다.</p>';
+        tbody.innerHTML = '';
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      flightInput.value = '';
+      renderTable(allFlights);
+      flightDetail.innerHTML = '';
+    });
+
+    // flights.json 경로는 data-generator가 저장한 위치에 맞게 조정하세요
+    fetch('/data/flights.json')
+      .then(res => {
+        if (!res.ok) throw new Error('데이터를 불러올 수 없습니다.');
+        return res.json();
+      })
+      .then(data => {
+        allFlights = data;
+        renderTable(allFlights);
+      })
+      .catch(e => {
+        tbody.innerHTML = '<tr><td colspan="5">데이터 로드 실패: ' + e.message + '</td></tr>';
+      });
+  </script>
+</body>
+</html>
