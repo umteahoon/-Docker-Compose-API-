@@ -5,7 +5,7 @@ import os  # 디렉토리 생성 등 파일 시스템 조작을 위한 모듈
 from datetime import datetime  # 현재 날짜와 시간을 가져오기 위한 모듈
 
 # 공공데이터포털에서 발급받은 API 키
-API_KEY = ""
+API_KEY = "발급받은 API 키"
 
 # 항공편 정보 조회 API의 기본 URL
 URL = "http://apis.data.go.kr/B551177/StatusOfPassengerFlightsDeOdp/getPassengerArrivalsDeOdp?"
